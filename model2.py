@@ -1,6 +1,7 @@
 import string
 import nltk
 import re
+import math
 class BigramModel:
 
     def __init__(self, tokens):
@@ -60,8 +61,7 @@ class BigramModel:
         aantalw = BigramModel.wordsintext(w)
         x = self.count_bigrams(self.cleanlist)
         aantalw_en_w_n = x[[w, w_n]]
-        chance_of_w_n = (aantalw_en_w_n / aantalw) * 100
-        #* 100 twijfelgeval
+        chance_of_w_n = (aantalw_en_w_n / aantalw)
         return chance_of_w_n
     
     def p_smooth(self,w, w_n):
@@ -69,14 +69,18 @@ class BigramModel:
         aantalw_en_w_n = x[[w, w_n]] + 1
         aantalw = BigramModel.wordsintext(w) + 1            
         #elke count 1 bij optellen, ook wanneer iets meerdere keren voorkomt
-        chance_of_w_n = (aantalw_en_w_n / aantalw) * 100
+        chance_of_w_n = (aantalw_en_w_n / aantalw)
         return chance_of_w_n
 
     def successors(self, w):
         wi_ci_list = []
         for z in self.tokens:
-            x = self.p_raw(w, z)
-            wi_ci_list.append((z,x))
+            if self.p_raw(w, z) != 0:
+                x = self.p_raw(w, z)
+                if (z,x) in wi_ci_list:
+                    wi_ci_list = wi_ci_list
+                else:
+                    wi_ci_list.append((z,x))
             
         return wi_ci_list
               
@@ -87,5 +91,16 @@ class BigramModel:
         
     
     def perplexity(self, sent):
+        #er moet van sent nog tokens gemaakt worden en vervolgens van de tokens
+        #sentences zoals in clean_tokens:
+        sent_tokenized = sent.split()?
         
-        pass
+        sent_sentences = sent...?
+        calc = 0
+        for x in sent_tokenized:
+            calc *= 1/(self.p_smooth(sent_tokenized[x], sent_tokenized[x + 1]))
+        perplxity = pow(calc, (1/self.count_bigrams(sent_sentences)))
+        return perplxity
+            
+        #sent is een voorbeeld bigram
+        
