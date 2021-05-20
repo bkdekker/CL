@@ -7,7 +7,6 @@ class BigramModel:
         self.tokens = tokens
         self.wordcount = {}
         self.cleanlist = self.clean_tokens()
-
     def clean_tokens(self):
         startmark = "<s>"
         endmark = "</s>"
@@ -18,13 +17,15 @@ class BigramModel:
                 token.strip(string.punctuation)
                 token.lower()
                 if token != "":     # Only continue for tokens that are not empty (due to remove of punctuation)
-                    if token in cleanlist:  # Count words while looping over the text
+                    if token in self.wordcount:  # Count words while looping over the text
                         self.wordcount[token] += 1
                     else:
                         self.wordcount[token] = 1
                     cleanlist.append(token)
             cleanlist.append(endmark)
         return cleanlist
+    
+    #telt aantal woorden:
     def wordsintext(self,w):
         nr_of_words = 0
         for x in self.tokens:
@@ -32,42 +33,52 @@ class BigramModel:
                 nr_of_words +=1
         return nr_of_words
     
-
+    def calc_bigram_frequencies(self, bigramcount):
+        total = 0
+        for bigram in bigramcount:
+            total += bigramcount[bigram]
+        freqtable = {}
+        for bigram in bigramcount:
+            freqtable[bigram] = bigramcount[bigram]/total
+            
+        return freqtable
+    def count_bigrams(self, sentences):
+        """
+        Calculates frequencies for all bigrams in all sentences. returns a 3D-array
+        where words are linked to frequencies.
+        """
+        bigramcount = {}
+        for sentence in sentences:
+            for word in sentence[:-1]: # Not looping over the last word ("</s>") since there is no second word
+                if sentence[word, word+1] in bigramcount:
+                    bigramcount[[word,word+1]] += 1
+                else:
+                    bigramcount[[word,word+1]] = 1
+        return bigramcount
+    
     def p_raw(self, w, w_n):
         aantalw = BigramModel.wordsintext(w)
-        aantalw_n = BigramModel.wordsintext(w_n)
-        chance_of_w_n = (aantalw_n / aantalw) * 100
+        x = self.count_bigrams(self.cleanlist)
+        aantalw_en_w_n = x[[w, w_n]]
+        chance_of_w_n = (aantalw_en_w_n / aantalw) * 100
+        #* 100 twijfelgeval
         return chance_of_w_n
-
+    
     def p_smooth(self,w, w_n):
-        w_n_smooth = BigramModel.wordsintext(w_n)
-        if w_n_smooth == 0:
-            w_n_smooth == w_n_smooth + 1
-        else: 
-            w_n_smooth == w_n_smooth
-            
-        aantalw = BigramModel.wordsintext(w)
-        aantalw_n = w_n_smooth
-        chance_of_w_n = (aantalw_n / aantalw) * 100
+        x = self.count_bigrams(self.cleanlist)
+        aantalw_en_w_n = x[[w, w_n]] + 1
+        aantalw = BigramModel.wordsintext(w) + 1            
+        #elke count 1 bij optellen, ook wanneer iets meerdere keren voorkomt
+        chance_of_w_n = (aantalw_en_w_n / aantalw) * 100
         return chance_of_w_n
 
     def successors(self, w):
-        
-        w_i = []
-        for z in len(self.tokens):
-          if self.tokens[z] == w:
-              if (w + self.tokens[z + 1]) in w_i:
-                  w_i = w_i
-              else:
-                  w_i.append((w + self.tokens[z + 1]))
-        
-        list_wi_ci = []
-        for result in w_i:
-            list_wi_ci.append(( w_i[result], BigramModel.p_raw(w, w_i[result])))
-
-              
-          
-        return list_wi_ci
+        wi_ci_list = []
+        for z in self.tokens:
+            x = self.p_raw(w, z)
+            wi_ci_list.append((z,x))
+            
+        return wi_ci_list
               
 #Return a list of pairs (w_i, c_i) , where w_i is a token that
 #might follow w , and c_i is its raw (unsmoothed) bigram
